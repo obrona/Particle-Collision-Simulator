@@ -3,7 +3,7 @@ CXXFLAGS := -Wall -Wextra -Werror -pedantic -std=c++20 -fopenmp
 RELEASEFLAGS := -O3
 
 # List of source files
-SRCS := main.cc io.cc
+SRCS := sim.cc io.cc
 HEADERS := io.h collision.h sim_validator.h
 
 # Object files
@@ -14,7 +14,7 @@ OBJS := $(SRCS:.cc=.o)
 all: release
 
 # List of executables (actual binary names)
-EXECUTABLES := sim 
+EXECUTABLES := sim
 PERF_EXECUTABLES := $(EXECUTABLES:%=%.perf)
 
 TARGETS := $(EXECUTABLES) 

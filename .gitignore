@@ -4,3 +4,9 @@ sim.perf
 *.o
 *.o.perf
 !sim_validator.a
+
+a.out
+test.cpp
+.vscode/
+
+simulation.mp4

@@ -9,6 +9,7 @@
 #include <fstream>
 #include <string>
 #include <vector>
+#include <omp.h>
 
 /*
 Parameters from input file.

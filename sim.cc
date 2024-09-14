@@ -3,10 +3,13 @@
 #include <cmath>
 #include <fstream>
 #include <vector>
+#include <iostream>
+using namespace std;
 
 #include "collision.h"
 #include "io.h"
 #include "sim_validator.h"
+#include "simul.cc"
 
 int main(int argc, char* argv[]) {
     // Read arguments and input file
@@ -16,6 +19,8 @@ int main(int argc, char* argv[]) {
 
     // Set number of threads
     omp_set_num_threads(params.param_threads);
+    Simulator simulator(params.param_particles);
+   
 
 #if CHECK == 1
     // Initialize collision checker
@@ -23,7 +28,7 @@ int main(int argc, char* argv[]) {
     // Initialize with starting positions
     validator.initialize(particles);
     // Uncomment the line below to enable visualization (makes program much slower)
-    // validator.enable_viz_output("test.out");
+    //validator.enable_viz_output("test.out");
 #endif
 
     // TODO: this is the part where you simulate particle behavior.
@@ -35,9 +40,10 @@ int main(int argc, char* argv[]) {
     validator.validate_step(particles);
     #endif
     */
-
-#if CHECK == 1
-    // Check final positions
-    validator.validate_step(particles);
-#endif
+    for (int i = 0; i <= params.param_steps; i ++) {
+        simulator.process_timestep(particles, params.square_size, params.param_radius);
+        #if CHECK == 1
+            validator.validate_step(particles);
+        #endif
+    }
 }

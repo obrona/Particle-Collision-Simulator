@@ -74,3 +74,4 @@ class SimulationValidator {
     // For output file stream
     std::ofstream viz_output;
 };
+

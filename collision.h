@@ -4,6 +4,7 @@
  * This file contains default collision detection and resolution logic.
  */
 
+#include <omp.h>
 #include <cassert>
 #include <cmath>
 #include <cstdlib>
