@@ -8,5 +8,6 @@ sim.perf
 a.out
 test.cpp
 .vscode/
+test.out
 
 simulation.mp4

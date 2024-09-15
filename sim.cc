@@ -28,7 +28,7 @@ int main(int argc, char* argv[]) {
     // Initialize with starting positions
     validator.initialize(particles);
     // Uncomment the line below to enable visualization (makes program much slower)
-     validator.enable_viz_output("test.out");
+    // validator.enable_viz_output("test.out");
 #endif
 
     // TODO: this is the part where you simulate particle behavior.
