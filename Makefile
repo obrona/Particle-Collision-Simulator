@@ -1,5 +1,5 @@
 CXX := g++
-CXXFLAGS := -Wall -Wextra -Werror -pedantic -std=c++20 -fopenmp
+CXXFLAGS := -Wall -Wextra -Werror -pedantic -std=c++20 -fopenmp 
 RELEASEFLAGS := -O3
 
 # List of source files

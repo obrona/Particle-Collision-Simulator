@@ -28,7 +28,7 @@ int main(int argc, char* argv[]) {
     // Initialize with starting positions
     validator.initialize(particles);
     // Uncomment the line below to enable visualization (makes program much slower)
-    //validator.enable_viz_output("test.out");
+     validator.enable_viz_output("test.out");
 #endif
 
     // TODO: this is the part where you simulate particle behavior.
@@ -40,7 +40,8 @@ int main(int argc, char* argv[]) {
     validator.validate_step(particles);
     #endif
     */
-    for (int i = 0; i <= params.param_steps; i ++) {
+    for (int step = 0; step <= params.param_steps; step ++) {
+        //cout << "Step: " << step << endl;
         simulator.process_timestep(particles, params.square_size, params.param_radius);
         #if CHECK == 1
             validator.validate_step(particles);
