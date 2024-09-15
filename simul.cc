@@ -66,6 +66,8 @@ struct Simulator {
 
 
 
+
+
     bool process_wall_collision(vector<Particle>& particles, int square_size, int radius) {
         bool changed = false;
         int len = particles.size();
@@ -178,6 +180,14 @@ struct Simulator {
             bool b1 = process_particle_collision();
             if (!b0 && !b1) break;
         }
+    }
+    private:
+    int to_bin(const Particle& p) {
+        int y_row= p.loc.y / bin_length;
+        int x_col = p.loc.x / bin_length;
+        if (y_row == ROWS) y_row = ROWS - 1;
+        if (x_col == ROWS) x_col = ROWS - 1;
+        return y_row * ROWS + x_col;
     }
 };
 
