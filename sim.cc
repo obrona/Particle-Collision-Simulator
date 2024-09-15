@@ -19,7 +19,7 @@ int main(int argc, char* argv[]) {
 
     // Set number of threads
     omp_set_num_threads(params.param_threads);
-    Simulator simulator(params.param_particles);
+    Simulator simulator(params, particles);
    
 
 #if CHECK == 1

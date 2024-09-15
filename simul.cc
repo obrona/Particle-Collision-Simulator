@@ -1,17 +1,52 @@
 #include <omp.h>
-#include <semaphore>
+
 #include <bits/stdc++.h>
+#include <cmath>
+
 #include "collision.h"
 #include "io.h"
 #include "sim_validator.h"
 using namespace std;
 
+int DIRS[8][2] = {{-1,0}, {-1,1}, {0,1}, {1,1}, {1,0}, {1,-1}, {0,-1}, {-1,-1}};
+
 struct Simulator {
+    int ROWS;
+    double bin_length;
+    vector<vector<int>> bins; // the particles are identified from their index
+
+    vector<Particle>&  particles;
+    Params& params;
+    
    
 
-    Simulator(int size)  {
-        size++;
+    Simulator(Params& params, vector<Particle> particles): particles(particles), params(params) {
+        
     }
+
+    void process_bin() {
+        bin_length = max(params.square_size / floor(sqrt(params.param_particles)), 4.0 * params.param_radius);
+        int ROWS = (int) floor(params.square_size / bin_length);
+        bin_length = params.square_size / ROWS;
+        bins = vector(ROWS * ROWS, vector<int>());
+    }
+
+    void bin_particles() {
+        #pragma omp parallel for
+        for (int i = 0; i < bins.size(); i ++) {
+            bins[i].clear();
+        }
+
+        #pragma omp parallel for 
+        for (int i = 0; i < particles.size(); i ++) {
+            Particle& p = particles[i];
+            int y_row= p.loc.y / bin_length;
+            int x_col = p.loc.x / bin_length;
+            bins[y_row * ROWS + x_col].push_back(p.i);
+        }
+        
+    }
+
 
     bool process_wall_collision(vector<Particle>& particles, int square_size, int radius) {
         bool changed = false;
@@ -27,6 +62,10 @@ struct Simulator {
         }
         
         return changed;
+    }
+
+    bool process_particles_collision() {
+
     }
 
     bool process_particle_collision(vector<Particle>& particles, int radius) {
