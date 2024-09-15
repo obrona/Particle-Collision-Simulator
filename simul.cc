@@ -26,23 +26,21 @@ struct Simulator {
 
     void process_bin() {
         bin_length = max(params.square_size / floor(sqrt(params.param_particles)), 4.0 * params.param_radius);
-        int ROWS = (int) floor(params.square_size / bin_length);
-        bin_length = params.square_size / ROWS;
+        ROWS = (int) floor(params.square_size / bin_length);
+        bin_length = params.square_size / ROWS; // bins on the right/btm edge are likely bigger
         bins = vector(ROWS * ROWS, vector<int>());
     }
 
     void bin_particles() {
         #pragma omp parallel for
-        for (int i = 0; i < bins.size(); i ++) {
+        for (size_t i = 0; i < bins.size(); i ++) {
             bins[i].clear();
         }
 
         #pragma omp parallel for 
-        for (int i = 0; i < particles.size(); i ++) {
+        for (size_t i = 0; i < particles.size(); i ++) {
             Particle& p = particles[i];
-            int y_row= p.loc.y / bin_length;
-            int x_col = p.loc.x / bin_length;
-            bins[y_row * ROWS + x_col].push_back(p.i);
+            bins[to_bin(p)].push_back(p.i);
         }
         
     }
@@ -62,10 +60,6 @@ struct Simulator {
         }
         
         return changed;
-    }
-
-    bool process_particles_collision() {
-
     }
 
     bool process_particle_collision(vector<Particle>& particles, int radius) {
@@ -107,6 +101,14 @@ struct Simulator {
             bool b1 = process_particle_collision(particles, radius);
             if (!b0 && !b1) break;
         }
+    }
+    private:
+    int to_bin(const Particle& p) {
+        int y_row= p.loc.y / bin_length;
+        int x_col = p.loc.x / bin_length;
+        if (y_row == ROWS) y_row = ROWS - 1;
+        if (x_col == ROWS) x_col = ROWS - 1;
+        return y_row * ROWS + x_col;
     }
 };
 
