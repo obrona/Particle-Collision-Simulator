@@ -8,7 +8,8 @@
 
 using namespace std;
 
-vector<vector<int>> DIRS = {{-1,0}, {-1,1}, {0,1}, {1,1}, {1,0}, {1,-1}, {0,-1}, {-1,-1}};
+//vector<vector<int>> DIRS = {{-1,0}, {-1,1}, {0,1}, {1,1}, {1,0}, {1,-1}, {0,-1}, {-1,-1}};
+vector<vector<int>> DIRS = {{-1,0}, {-1,1}, {0,1}, {1,1}};
 
 struct Simulator {
     int ROWS;
@@ -114,7 +115,10 @@ struct Simulator {
         // since the blocks are large, >= 5 * radius, let say, we doing block right neighbour, and p0 in b0 collide with p1 in b1,
         // then p1 cannot collide with any block in b2
         // but for particles in each block, have to do serially, because p0 and p0' in b0 can collide with p1 in b1
-        for (int d = 0; d < 8; d ++) {
+        //
+        // another optimisation is to just check the top/left/right/bottom half only, for ther other half
+        // the ajacent block will do the check
+        for (int d = 0; d < 4; d ++) {
             vector<int>& dir = DIRS[d];
             #pragma omp parallel for collapse(2) 
             for (int r = 0; r < ROWS; r ++) {
