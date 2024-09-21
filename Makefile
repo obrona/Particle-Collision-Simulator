@@ -36,3 +36,7 @@ $(PERF_EXECUTABLES): %.perf: %.o.perf io.o
 
 clean:
 	$(RM) *.o *.o.perf $(EXECUTABLES) $(PERF_EXECUTABLES)
+	$(RM) bonus bonus.perf
+
+bonus:
+	bash bonus.sh

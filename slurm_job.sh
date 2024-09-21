@@ -16,6 +16,6 @@ echo "Job started at $(date)"
 echo "Arguments to srun: $@"
 
 # Runs your script with the arguments you passed in
-srun $@
+srun time ./sim.perf tests/large/100k_density_0.7.in 16
 
 echo "Job ended at $(date)"

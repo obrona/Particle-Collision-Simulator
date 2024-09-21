@@ -4,6 +4,9 @@ sim.perf
 *.o
 *.o.perf
 !sim_validator.a
+e1091280*
+bonus
+bonus.perf
 
 a.out
 test.cpp
