@@ -26,8 +26,8 @@ struct Simulator {
     }
 
     void process_bin() {
-        //bin_length = max((double) params.square_size / sqrt(params.param_particles), 5.0 * (double) params.param_radius);
-        bin_length = 5.0 * (double) params.param_radius;
+        bin_length = max((double) params.square_size / sqrt(params.param_particles), 5.0 * (double) params.param_radius);
+        //bin_length = 5.0 * (double) params.param_radius;
         ROWS = (double) params.square_size / bin_length; //typecasted to int, so floor is taken already
         bin_length = (double) params.square_size / ROWS;
         bins = vector(ROWS * ROWS, vector<int>());
