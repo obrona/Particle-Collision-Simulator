@@ -36,7 +36,14 @@ $(PERF_EXECUTABLES): %.perf: %.o.perf io.o
 
 clean:
 	$(RM) *.o *.o.perf $(EXECUTABLES) $(PERF_EXECUTABLES)
-	$(RM) bonus bonus.perf
+	$(RM) bonus bonus.perf e1091280 e1091280.perf
 
 bonus:
-	bash bonus.sh
+	$(CXX) $(CXXFLAGS) -DCHECK=1 sim_validator.a io.cc sim.cc -o bonus
+	$(CXX) $(CXXFLAGS) -DCHECK=0 io.cc sim.cc -o bonus.perf
+
+submit:
+	$(CXX) $(CXXFLAGS) -DCHECK=1 sim_validator.a io.cc sim.cc -o e1091280
+	$(CXX) $(CXXFLAGS) -DCHECK=0 io.cc sim.cc -o bonus.perf -o e1091280.perf
+
+

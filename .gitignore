@@ -7,6 +7,7 @@ sim.perf
 e1091280*
 bonus
 bonus.perf
+io.h.gch
 
 a.out
 test.cpp
