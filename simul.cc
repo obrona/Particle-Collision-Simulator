@@ -98,8 +98,8 @@ struct Simulator {
                 int len = bin.size();
                 for (int i = 0; i < len; i ++) {
                     for (int j = i + 1; j < len; j ++) {
-                        Particle& p0 = particles[bin.at(i)];
-                        Particle& p1 = particles[bin.at(j)];
+                        Particle& p0 = particles[bin[i]];
+                        Particle& p1 = particles[bin[j]];
                         if (is_particle_collision(p0.loc, p0.vel, p1.loc, p1.vel, params.param_radius)) {
                             changed = true;
                             resolve_particle_collision(p0.loc, p0.vel, p1.loc, p1.vel);
@@ -140,30 +140,6 @@ struct Simulator {
                 }
             }
         }
-        return changed;
-    }
-
-    bool process_particle_collision(vector<Particle>& particles, int radius) {
-        bool changed = false;
-        int len = particles.size();
-        int lim_grp = len - 1 + len - 2;
-       
-        for (int grp = 1; grp <= lim_grp; grp ++) {
-            int lim = grp >> 1;
-            #pragma omp parallel for
-            for (int i = 0; i <= lim; i ++) {
-                int j = grp - i;
-                if (i == j || j >= len) continue;
-
-                Particle& p0 = particles[i];
-                Particle& p1 = particles[j];
-                if (is_particle_collision(p0.loc, p0.vel, p1.loc, p1.vel, radius)) {
-                    changed = true;
-                    resolve_particle_collision(p0.loc, p0.vel, p1.loc, p1.vel);
-                }
-            }
-        }
-        
         return changed;
     }
 
