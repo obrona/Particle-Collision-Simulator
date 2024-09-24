@@ -38,7 +38,7 @@ struct Simulator {
     }
 
     bool valid(int r, int c) {
-        return r >= 0 && r < ROWS && c >= 0 && c < ROWS;
+        return r >= 0 && c >= 0 && r < ROWS && c < ROWS;
     }
 
     void bin_particles() {
@@ -127,8 +127,10 @@ struct Simulator {
 
                     vector<int>& bin = bins[change_coor(r, c)];
                     vector<int>& neighbour_bin = bins[change_coor(r + dir[0], c + dir[1])];
-                    for (int i = 0; i < (int) bin.size(); i ++) {
-                        for (int j = 0; j < (int) neighbour_bin.size(); j ++) {
+                    int bin_len = bin.size();
+                    int neighbour_bin_len = neighbour_bin.size();
+                    for (int i = 0; i < bin_len; i ++) {
+                        for (int j = 0; j < neighbour_bin_len; j ++) {
                             Particle& p0 = particles[bin[i]];
                             Particle& p1 = particles[neighbour_bin[j]];
                             if (is_particle_collision(p0.loc, p0.vel, p1.loc, p1.vel, params.param_radius)) {
