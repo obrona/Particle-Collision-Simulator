@@ -8,13 +8,12 @@
 using namespace std;
 
 //vector<vector<int>> DIRS = {{-1,0}, {-1,1}, {0,1}, {1,1}, {1,0}, {1,-1}, {0,-1}, {-1,-1}};
-vector<vector<int>> DIRS = {{-1,0}, {-1,1}, {0,1}, {1,1}};
 
 struct Simulator {
     int ROWS;
     double bin_length;
-    vector<vector<int>> bins; // the particles are identified from their index
-
+    vector<vector<int>> bins; // the particles are identified from their inde
+    
     vector<Particle>&  particles;
     Params& params;
     
