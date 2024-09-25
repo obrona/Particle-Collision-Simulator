@@ -53,7 +53,8 @@ struct Simulator {
             int y_row = p.loc.y / bin_length;
             y_row = min(max(0, y_row), ROWS - 2);
             
-            int x_col = (y_row & 1) ? p.loc.x / bin_length : (p.loc.x - bin_length / 2) / bin_length + 1;
+            // if row is even, then it is shifted, if it is odd, not shifted.
+            int x_col = (y_row & 1) ? p.loc.x / bin_length : (p.loc.x - bin_length / 2) / bin_length + 1; 
             x_col = min(max(0, x_col), ROWS - 1 - (y_row & 1));
             
             bins[y_row * ROWS + x_col].push_back(i);
