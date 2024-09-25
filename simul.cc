@@ -50,11 +50,11 @@ struct Simulator {
         for (int i = 0; i < len; i ++) {
             Particle& p = particles[i];
             
-            int x_col = p.loc.x / bin_length;
-            x_col = min(max(0, x_col), ROWS - 2);  // the particle can be outside the box
+            int y_row = p.loc.y / bin_length;
+            y_row = min(max(0, y_row), ROWS - 2);
             
-            int y_row = (x_col & 1) ? p.loc.y / bin_length : (p.loc.y - bin_length / 2) / bin_length + 1;
-            y_row = min(max(0, y_row), ROWS - 1 - (x_col & 1));
+            int x_col = (y_row & 1) ? p.loc.x / bin_length : (p.loc.x - bin_length / 2) / bin_length + 1;
+            x_col = min(max(0, x_col), ROWS - 1 - (y_row & 1));
             
             bins[y_row * ROWS + x_col].push_back(i);
         }
