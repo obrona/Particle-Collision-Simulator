@@ -38,6 +38,7 @@ struct Simulator {
 
     bool valid(int r, int c) {
         return r >= 0 && c >= 0 && r < ROWS && c < ROWS;
+        return r >= 0 && c >= 0 && r < ROWS && c < ROWS;
     }
 
     void bin_particles() {
