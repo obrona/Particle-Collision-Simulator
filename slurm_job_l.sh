@@ -2,7 +2,7 @@
 
 ## This is an example Slurm template job script for A1 that just runs the script and arguments you pass in via `srun`.
 
-#SBATCH --job-name=a1 perf 1
+#SBATCH --job-name=a1-perf-l
 #SBATCH --nodes=1
 #SBATCH --ntasks=1
 #SBATCH --job-name=array_job_1
@@ -21,7 +21,7 @@ index=$SLURM_ARRAY_TASK_ID
 value=${values[$index]}
 # Runs your script with the arguments you passed in
 temp_file="temp_file_${SLURM_JOB_ID}_${SLURM_ARRAY_TASK_ID}.txt"
-python3 gen_testcase.py 2000 "$value" 1 100 0 5 > "$temp_file"
-echo "2000 $value 1 100 0 5 8"
+python3 gen_testcase.py 10000 7926 40 $value 0 5 > "$temp_file"
+echo "10000 7926 40 $value 0 5 8" 1>&2
 srun time ./sim.perf "$temp_file" 8
 rm "$temp_file"
