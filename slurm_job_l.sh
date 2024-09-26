@@ -23,5 +23,5 @@ value=${values[$index]}
 temp_file="temp_file_${SLURM_JOB_ID}_${SLURM_ARRAY_TASK_ID}.txt"
 python3 gen_testcase.py 10000 7926 40 $value 0 5 > "$temp_file"
 echo "10000 7926 40 $value 0 5 8" 1>&2
-srun time ./sim.perf "$temp_file" 8
+srun perf stat -r 3 ./sim.perf "$temp_file" 8
 rm "$temp_file"
