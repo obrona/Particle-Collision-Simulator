@@ -46,4 +46,9 @@ submit:
 	$(CXX) $(CXXFLAGS) -DCHECK=1 sim_validator.a io.cc sim.cc -o e1091280
 	$(CXX) $(CXXFLAGS) -DCHECK=0 io.cc sim.cc -o bonus.perf -o e1091280.perf
 
+debug:
+	$(CXX) $(CXXFLAGS) -DCHECK=1 -g sim_validator.a io.cc sim.cc -o debug
+	$(CXX) $(CXXFLAGS) -DCHECK=0 io.cc sim.cc -o bonus.perf -o debug.perf
+
+
 

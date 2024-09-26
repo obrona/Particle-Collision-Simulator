@@ -1,5 +1,4 @@
 #include <omp.h>
-
 #include <bits/stdc++.h>
 #include <cmath>
 
@@ -9,13 +8,12 @@
 using namespace std;
 
 //vector<vector<int>> DIRS = {{-1,0}, {-1,1}, {0,1}, {1,1}, {1,0}, {1,-1}, {0,-1}, {-1,-1}};
-vector<vector<int>> DIRS = {{-1,0}, {-1,1}, {0,1}, {1,1}};
 
 struct Simulator {
     int ROWS;
     double bin_length;
-    vector<vector<int>> bins; // the particles are identified from their index
-
+    vector<vector<int>> bins; // the particles are identified from their inde
+    
     vector<Particle>&  particles;
     Params& params;
     
@@ -27,8 +25,8 @@ struct Simulator {
 
     void process_bin() {
         bin_length = max((double) params.square_size / sqrt(params.param_particles), 5.0 * (double) params.param_radius);
-        //bin_length = 5.0 * (double) params.param_radius;
         ROWS = (double) params.square_size / bin_length; //typecasted to int, so floor is taken already
+        ROWS ++;
         bin_length = (double) params.square_size / ROWS;
         bins = vector(ROWS * ROWS, vector<int>());
     }    
@@ -39,6 +37,7 @@ struct Simulator {
 
     bool valid(int r, int c) {
         return r >= 0 && c >= 0 && r < ROWS && c < ROWS;
+        return r >= 0 && c >= 0 && r < ROWS && c < ROWS;
     }
 
     void bin_particles() {
@@ -48,16 +47,15 @@ struct Simulator {
         }
 
         int len = particles.size();
-        //#pragma omp parallel for 
         for (int i = 0; i < len; i ++) {
             Particle& p = particles[i];
             
             int y_row = p.loc.y / bin_length;
-            int x_col = p.loc.x / bin_length;
-
-            // the particle can be outside the box
-            y_row = min(max(0, y_row), ROWS - 1);
-            x_col = min(max(0, x_col), ROWS - 1);
+            y_row = min(max(0, y_row), ROWS - 2);
+            
+            // if row is even, then it is shifted, if it is odd, not shifted.
+            int x_col = (y_row & 1) ? p.loc.x / bin_length : (p.loc.x - bin_length / 2) / bin_length + 1; 
+            x_col = min(max(0, x_col), ROWS - 1 - (y_row & 1));
             
             bins[y_row * ROWS + x_col].push_back(i);
         }
@@ -92,8 +90,10 @@ struct Simulator {
         // process own block 1st. In each block, we have to process collisions serially, but each block can be done
         // in parallel, as each particle is in 1 block only.
         #pragma omp parallel for collapse(2)
-        for (int r = 0; r < ROWS; r ++) {
+        for (int r = 0; r < ROWS - 1; r ++) {
             for (int c = 0; c < ROWS; c ++) {
+                if ((r & 1) && c == ROWS - 1) continue;
+                
                 vector<int>& bin = bins[change_coor(r, c)];
                 int len = bin.size();
                 for (int i = 0; i < len; i ++) {
@@ -110,29 +110,45 @@ struct Simulator {
         }
 
 
-        // when we check collision in a block with its adjacent blocks, we do it this way:
-        // for all blocks, resolve collisons with its left block, then right block, top, bottom, top left ...
-        // since the blocks are large, >= 5 * radius, let say, we doing block right neighbour, and p0 in b0 collide with p1 in b1,
-        // then p1 cannot collide with any block in b2
-        // but for particles in each block, have to do serially, because p0 and p0' in b0 can collide with p1 in b1
-        //
-        // another optimisation is to just check the top/left/right/bottom half only, for ther other half
-        // the ajacent block will do the check
-        for (int d = 0; d < 4; d ++) {
-            vector<int>& dir = DIRS[d];
-            #pragma omp parallel for collapse(2) 
-            for (int r = 0; r < ROWS; r ++) {
-                for (int c = 0; c < ROWS; c ++) {
-                    if (!valid(r + dir[0], c + dir[1])) continue;
+        // 3 neighbor cells to check, top right, right, bottom right
+        // check right
+        #pragma omp parallel for collapse(2)
+        for (int r = 0; r < ROWS - 1; r ++) {
+            for (int c = 0; c < ROWS; c ++) {
+                if (((r & 1) && c == ROWS - 1) || !valid(r, c + 1)) continue;
+                
+                vector<int>& bin = bins[change_coor(r, c)];
+                vector<int>& neighbor_bin = bins[change_coor(r, c + 1)];
+                int bin_len = bin.size(); 
+                int neighbor_bin_len = neighbor_bin.size();
+                for (int i = 0; i < bin_len; i ++) {
+                    for (int j = 0; j < neighbor_bin_len; j ++) {
+                        Particle& p0 = particles[bin[i]];
+                        Particle& p1 = particles[neighbor_bin[j]];
+                        if (is_particle_collision(p0.loc, p0.vel, p1.loc, p1.vel, params.param_radius)) {
+                            changed = true;
+                            resolve_particle_collision(p0.loc, p0.vel, p1.loc, p1.vel);
+                        }
+                    }
+                }
+            }
+        }
 
+        // check top right and bottom right
+        for (int d = -1; d <= 1; d += 2) {
+            #pragma omp parallel for
+            for (int r = 0; r < ROWS - 1; r ++) {
+                for (int c = 0; c < ROWS; c ++) {
+                    if (((r & 1) && c == ROWS - 1) || !valid(r + d, c + (r & 1))) continue;
+                    
                     vector<int>& bin = bins[change_coor(r, c)];
-                    vector<int>& neighbour_bin = bins[change_coor(r + dir[0], c + dir[1])];
-                    int bin_len = bin.size();
-                    int neighbour_bin_len = neighbour_bin.size();
+                    vector<int>& neighbor_bin = bins[change_coor(r + d, c + (r & 1))];
+                    int bin_len = bin.size(); 
+                    int neighbor_bin_len = neighbor_bin.size();
                     for (int i = 0; i < bin_len; i ++) {
-                        for (int j = 0; j < neighbour_bin_len; j ++) {
+                        for (int j = 0; j < neighbor_bin_len; j ++) {
                             Particle& p0 = particles[bin[i]];
-                            Particle& p1 = particles[neighbour_bin[j]];
+                            Particle& p1 = particles[neighbor_bin[j]];
                             if (is_particle_collision(p0.loc, p0.vel, p1.loc, p1.vel, params.param_radius)) {
                                 changed = true;
                                 resolve_particle_collision(p0.loc, p0.vel, p1.loc, p1.vel);
@@ -143,7 +159,7 @@ struct Simulator {
             }
         }
         return changed;
-    }
+    } 
 
     void process_timestep(vector<Particle>& particles, int square_size, int radius) {
         int len = particles.size();
