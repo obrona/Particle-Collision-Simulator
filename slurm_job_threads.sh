@@ -21,7 +21,7 @@ index=$SLURM_ARRAY_TASK_ID
 value=${values[$index]}
 # Runs your script with the arguments you passed in
 temp_file="temp_file_${SLURM_JOB_ID}_${SLURM_ARRAY_TASK_ID}.txt"
-python3 gen_testcase.py 100000 25064 40 100 0 5 > "$temp_file"
-echo "10000 25064 40 100 0 5 $value" 1>&2
+python3 gen_testcase.py 50000 10000 15 100 0 5 > "$temp_file"
+echo "50000 10000 15 100 0 5 $value" 1>&2
 srun perf stat -r 3 ./sim.perf "$temp_file" $value
 rm "$temp_file"
