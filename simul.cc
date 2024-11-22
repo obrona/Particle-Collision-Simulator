@@ -7,13 +7,13 @@
 
 using namespace std;
 
-//vector<vector<int>> DIRS = {{-1,0}, {-1,1}, {0,1}, {1,1}, {1,0}, {1,-1}, {0,-1}, {-1,-1}};
+// reduce cache false sharing by instead of storing indexes, store the particles in each bin
 
 struct Simulator {
     int ROWS;
     double bin_length;
     vector<vector<int>> bins; // the particles are identified from their idx
-    
+    vector<vector<Particle>> pbins;
     
     vector<Particle>&  particles;
     Params& params;
@@ -31,6 +31,7 @@ struct Simulator {
 
         ROWS ++; // because we shift by 0.5 * bin_length so we add 1 to ROWS
         bins = vector(ROWS * ROWS, vector<int>());
+        pbins = vector(ROWS * ROWS, vector<Particle>());
         
 
         
@@ -49,6 +50,7 @@ struct Simulator {
         //#pragma omp parallel for
         for (int i = 0; i < (int) bins.size(); i ++) {
             bins[i].clear();
+            pbins[i].clear();
         }
 
         int len = particles.size();
@@ -63,6 +65,7 @@ struct Simulator {
             x_col = min(max(0, x_col), ROWS - 1 - (y_row & 1));
             
             bins[y_row * ROWS + x_col].push_back(i);
+            pbins[y_row * ROWS + x_col].push_back(p);
             
         }
         
@@ -78,11 +81,11 @@ struct Simulator {
         int len = particles.size();
         
         #pragma omp parallel for 
-        for (int i = 0; i < len; i ++) {
-            Particle& p = particles[i];
-            if (is_wall_collision(p.loc, p.vel, square_size, radius)) {
-                changed = true;
-                resolve_wall_collision(p.loc, p.vel, square_size, radius);
+        for (int i = 0; i < (int) bins.size(); i ++) {
+            for (Particle& p : pbins[i]) {
+                if (is_wall_collision(p.loc, p.vel, params.square_size, params.param_radius)) {
+                    resolve_wall_collision(p.loc, p.vel, params.square_size, params.param_radius);
+                }
             }
         }
         
@@ -100,12 +103,12 @@ struct Simulator {
             for (int c = 0; c < ROWS; c ++) {
                 if ((r & 1) && c == ROWS - 1) continue;
                 
-                vector<int>& bin = bins[change_coor(r, c)];
-                int len = bin.size();
+                vector<Particle>& pbin = pbins[change_coor(r, c)];
+                int len = pbin.size();
                 for (int i = 0; i < len; i ++) {
                     for (int j = i + 1; j < len; j ++) {
-                        Particle& p0 = particles[bin[i]];
-                        Particle& p1 = particles[bin[j]];
+                        Particle& p0 = pbin[i];
+                        Particle& p1 = pbin[j];
                         if (is_particle_collision(p0.loc, p0.vel, p1.loc, p1.vel, params.param_radius)) {
                             changed = true;
                             resolve_particle_collision(p0.loc, p0.vel, p1.loc, p1.vel);
@@ -123,14 +126,14 @@ struct Simulator {
             for (int c = 0; c < ROWS; c ++) {
                 if (((r & 1) && c == ROWS - 1) || !valid(r, c + 1)) continue;
                 
-                vector<int>& bin = bins[change_coor(r, c)];
-                vector<int>& neighbor_bin = bins[change_coor(r, c + 1)];
-                int bin_len = bin.size(); 
-                int neighbor_bin_len = neighbor_bin.size();
+                vector<Particle>& pbin = pbins[change_coor(r, c)];
+                vector<Particle>& neighbor_pbin = pbins[change_coor(r, c + 1)];
+                int bin_len = pbin.size(); 
+                int neighbor_bin_len = neighbor_pbin.size();
                 for (int i = 0; i < bin_len; i ++) {
                     for (int j = 0; j < neighbor_bin_len; j ++) {
-                        Particle& p0 = particles[bin[i]];
-                        Particle& p1 = particles[neighbor_bin[j]];
+                        Particle& p0 = pbin[i];
+                        Particle& p1 = neighbor_pbin[j];
                         if (is_particle_collision(p0.loc, p0.vel, p1.loc, p1.vel, params.param_radius)) {
                             changed = true;
                             resolve_particle_collision(p0.loc, p0.vel, p1.loc, p1.vel);
@@ -147,14 +150,14 @@ struct Simulator {
                 for (int c = 0; c < ROWS; c ++) {
                     if (((r & 1) && c == ROWS - 1) || !valid(r + d, c + (r & 1))) continue;
                     
-                    vector<int>& bin = bins[change_coor(r, c)];
-                    vector<int>& neighbor_bin = bins[change_coor(r + d, c + (r & 1))];
-                    int bin_len = bin.size(); 
-                    int neighbor_bin_len = neighbor_bin.size();
+                    vector<Particle>& pbin = pbins[change_coor(r, c)];
+                    vector<Particle>& neighbor_pbin = pbins[change_coor(r + d, c + (r & 1))];
+                    int bin_len = pbin.size(); 
+                    int neighbor_bin_len = neighbor_pbin.size();
                     for (int i = 0; i < bin_len; i ++) {
                         for (int j = 0; j < neighbor_bin_len; j ++) {
-                            Particle& p0 = particles[bin[i]];
-                            Particle& p1 = particles[neighbor_bin[j]];
+                            Particle& p0 = pbin[i];
+                            Particle& p1 = neighbor_pbin[j];
                             if (is_particle_collision(p0.loc, p0.vel, p1.loc, p1.vel, params.param_radius)) {
                                 changed = true;
                                 resolve_particle_collision(p0.loc, p0.vel, p1.loc, p1.vel);
@@ -166,6 +169,17 @@ struct Simulator {
         }
         return changed;
     } 
+
+    void copyBack() {
+        #pragma omp parallel for 
+        for (int i = 0; i < bins.size(); i ++) {
+            vector<Particle>& pbin = pbins[i];
+            vector<int>& bin = bins[i];
+            for (int j = 0; j < (int) bin.size(); j ++) {
+                particles[bin[j]] = pbin[j];
+            }
+        }
+    }
 
     void process_timestep(vector<Particle>& particles, int square_size, int radius) {
         int len = particles.size();
@@ -184,6 +198,8 @@ struct Simulator {
             bool b1 = process_particle_collision();
             if (!b0 && !b1) break;
         }
+
+        copyBack();
     }
     private:
     int to_bin(const Particle& p) {
