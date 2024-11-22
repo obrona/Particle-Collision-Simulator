@@ -12,23 +12,28 @@ using namespace std;
 struct Simulator {
     int ROWS;
     double bin_length;
-    vector<vector<int>> bins; // the particles are identified from their inde
+    vector<vector<int>> bins; // the particles are identified from their idx
+    
     
     vector<Particle>&  particles;
     Params& params;
     
-   
-
     Simulator(Params& params, vector<Particle>& particles): particles(particles), params(params) {
         process_bin();
     }
 
     void process_bin() {
-        bin_length = max((double) params.square_size / sqrt(params.param_particles), 5.0 * (double) params.param_radius);
+        //bin_length = max((double) params.square_size / sqrt(params.param_particles), 5.0 * (double) params.param_radius);
+        bin_length = 5.0 * (double) params.param_radius;
         ROWS = (double) params.square_size / bin_length; //typecasted to int, so floor is taken already
         ROWS ++;
         bin_length = (double) params.square_size / ROWS;
+
+        ROWS ++; // because we shift by 0.5 * bin_length so we add 1 to ROWS
         bins = vector(ROWS * ROWS, vector<int>());
+        
+
+        
     }    
 
     int change_coor(int r, int c) {
@@ -51,13 +56,14 @@ struct Simulator {
             Particle& p = particles[i];
             
             int y_row = p.loc.y / bin_length;
-            y_row = min(max(0, y_row), ROWS - 2);
+            y_row = min(max(0, y_row), ROWS - 2); // curr position of particles can be negative
             
             // if row is even, then it is shifted, if it is odd, not shifted.
             int x_col = (y_row & 1) ? p.loc.x / bin_length : (p.loc.x - bin_length / 2) / bin_length + 1; 
             x_col = min(max(0, x_col), ROWS - 1 - (y_row & 1));
             
             bins[y_row * ROWS + x_col].push_back(i);
+            
         }
         
     }
@@ -112,7 +118,7 @@ struct Simulator {
 
         // 3 neighbor cells to check, top right, right, bottom right
         // check right
-        #pragma omp parallel for collapse(2)
+        #pragma omp parallel for collapse(2) 
         for (int r = 0; r < ROWS - 1; r ++) {
             for (int c = 0; c < ROWS; c ++) {
                 if (((r & 1) && c == ROWS - 1) || !valid(r, c + 1)) continue;
