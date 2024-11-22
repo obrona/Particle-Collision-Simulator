@@ -25,11 +25,12 @@ struct Simulator {
     void process_bin() {
         //bin_length = max((double) params.square_size / sqrt(params.param_particles), 5.0 * (double) params.param_radius);
         bin_length = 5.0 * (double) params.param_radius;
-        ROWS = (double) params.square_size / bin_length; //typecasted to int, so floor is taken already
-        ROWS ++;
+        ROWS = (double) params.square_size / bin_length; //typecasted to int, so floor is taken already, so new bin_length will only increase
+        if (ROWS == 0) ROWS ++; // +1 if ROWS is 0, meaning length of box is < 5 * particle radius
+        ROWS ++; // +1 to account for the shift
         bin_length = (double) params.square_size / ROWS;
 
-        ROWS ++; // because we shift by 0.5 * bin_length so we add 1 to ROWS
+        
         bins = vector(ROWS * ROWS, vector<int>());
         pbins = vector(ROWS * ROWS, vector<Particle>());
         
@@ -58,7 +59,7 @@ struct Simulator {
             Particle& p = particles[i];
             
             int y_row = p.loc.y / bin_length;
-            y_row = min(max(0, y_row), ROWS - 2); // curr position of particles can be negative
+            y_row = min(max(0, y_row), ROWS - 2); // curr position of particles can be negative or exceed boundary
             
             // if row is even, then it is shifted, if it is odd, not shifted.
             int x_col = (y_row & 1) ? p.loc.x / bin_length : (p.loc.x - bin_length / 2) / bin_length + 1; 
