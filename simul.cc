@@ -8,6 +8,7 @@
 using namespace std;
 
 // reduce cache false sharing by instead of storing indexes, store the particles in each bin
+// use schedule(guided)
 
 struct Simulator {
     int ROWS;
@@ -23,19 +24,15 @@ struct Simulator {
     }
 
     void process_bin() {
-        //bin_length = max((double) params.square_size / sqrt(params.param_particles), 5.0 * (double) params.param_radius);
-        bin_length = 5.0 * (double) params.param_radius;
+        bin_length = 4.5 * (double) params.param_radius;
         ROWS = (double) params.square_size / bin_length; //typecasted to int, so floor is taken already, so new bin_length will only increase
         if (ROWS == 0) ROWS ++; // +1 if ROWS is 0, meaning length of box is < 5 * particle radius
+        
         ROWS ++; // +1 to account for the shift
         bin_length = (double) params.square_size / ROWS;
 
-        
         bins = vector(ROWS * ROWS, vector<int>());
         pbins = vector(ROWS * ROWS, vector<Particle>());
-        
-
-        
     }    
 
     int change_coor(int r, int c) {
@@ -48,8 +45,9 @@ struct Simulator {
     }
 
     void bin_particles() {
-        //#pragma omp parallel for
-        for (int i = 0; i < (int) bins.size(); i ++) {
+        int LEN = bins.size();
+        #pragma omp parallel for
+        for (int i = 0; i < LEN; i ++) {
             bins[i].clear();
             pbins[i].clear();
         }
@@ -79,10 +77,10 @@ struct Simulator {
 
     bool process_wall_collision(vector<Particle>& particles, int square_size, int radius) {
         bool changed = false;
-        int len = particles.size();
+        int len = bins.size();
         
         #pragma omp parallel for 
-        for (int i = 0; i < (int) bins.size(); i ++) {
+        for (int i = 0; i < len; i ++) {
             for (Particle& p : pbins[i]) {
                 if (is_wall_collision(p.loc, p.vel, params.square_size, params.param_radius)) {
                     resolve_wall_collision(p.loc, p.vel, params.square_size, params.param_radius);
@@ -99,7 +97,7 @@ struct Simulator {
         bool changed = false;
         // process own block 1st. In each block, we have to process collisions serially, but each block can be done
         // in parallel, as each particle is in 1 block only.
-        #pragma omp parallel for collapse(2)
+        #pragma omp parallel for collapse(2) schedule(guided)
         for (int r = 0; r < ROWS - 1; r ++) {
             for (int c = 0; c < ROWS; c ++) {
                 if ((r & 1) && c == ROWS - 1) continue;
@@ -122,7 +120,7 @@ struct Simulator {
 
         // 3 neighbor cells to check, top right, right, bottom right
         // check right
-        #pragma omp parallel for collapse(2) 
+        #pragma omp parallel for collapse(2) schedule(guided)
         for (int r = 0; r < ROWS - 1; r ++) {
             for (int c = 0; c < ROWS; c ++) {
                 if (((r & 1) && c == ROWS - 1) || !valid(r, c + 1)) continue;
@@ -172,11 +170,14 @@ struct Simulator {
     } 
 
     void copyBack() {
+        int len = bins.size();
         #pragma omp parallel for 
-        for (int i = 0; i < bins.size(); i ++) {
+        for (int i = 0; i < len; i ++) {
             vector<Particle>& pbin = pbins[i];
             vector<int>& bin = bins[i];
-            for (int j = 0; j < (int) bin.size(); j ++) {
+            
+            int len2 = bin.size();
+            for (int j = 0; j < len2; j ++) {
                 particles[bin[j]] = pbin[j];
             }
         }
